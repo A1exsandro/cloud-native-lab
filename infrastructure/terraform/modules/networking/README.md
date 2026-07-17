@@ -1,15 +1,27 @@
 # Networking Module
 
-This module provisions Oracle Cloud networking resources.
+This module provisions the networking foundation for the Cloud Native Lab on Oracle Cloud Infrastructure (OCI).
 
-Future resources include:
+## Planned Resources
 
 - Virtual Cloud Network (VCN)
 - Internet Gateway
 - NAT Gateway
 - Route Tables
-- Security Lists
+- Public Subnet
+- Private Subnet
 - Network Security Groups (NSGs)
-- Subnets
 
-The module is designed to be reusable across environments.
+## Inputs
+
+| Name | Description |
+|------|-------------|
+| compartment_ocid | OCI compartment identifier |
+| vcn_cidr | CIDR block of the VCN |
+| display_name | Resource display name |
+| dns_label | DNS label |
+| freeform_tags | Common resource tags |
+
+## Outputs
+
+Outputs will be documented as resources are implemented.
