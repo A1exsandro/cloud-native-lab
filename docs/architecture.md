@@ -336,6 +336,23 @@ Potential future enhancements include:
 
 ---
 
+## Development Environment
+
+Recommended tools:
+
+- Ubuntu 24.04 LTS (Native or WSL)
+- Git
+- Terraform
+- Ansible
+- kubectl
+- Helm
+- OCI CLI
+- Make
+- jq
+- yq
+
+---
+
 # Conclusion
 
 Cloud Native Lab is intended to demonstrate the complete lifecycle of building and operating a production-like Cloud Native Platform.
