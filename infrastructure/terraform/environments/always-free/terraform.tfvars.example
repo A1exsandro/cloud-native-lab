@@ -1,0 +1,7 @@
+project_name     = "cloud-native-lab"
+
+environment      = "always-free"
+
+region           = "sa-saopaulo-1"
+
+compartment_ocid = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxx"
