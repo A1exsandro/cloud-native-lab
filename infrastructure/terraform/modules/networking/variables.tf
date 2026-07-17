@@ -21,6 +21,5 @@ variable "dns_label" {
 variable "freeform_tags" {
   description = "Common tags applied to resources."
   type        = map(string)
-
-  default = {}
+  default     = {}
 }
