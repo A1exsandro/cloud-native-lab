@@ -17,3 +17,8 @@ variable "project_name" {
   description = "Project name."
   type        = string
 }
+
+variable "owner" {
+  description = "Resource owner."
+  type        = string
+}
