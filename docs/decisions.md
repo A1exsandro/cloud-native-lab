@@ -10,12 +10,11 @@ Detailed discussions are documented as Architecture Decision Records (ADRs).
 
 | Date | Decision | Status | ADR |
 |------|----------|--------|-----|
-| 2026-07 | Use Oracle Cloud Always Free | Accepted | ADR-0001 |
-| 2026-07 | Standardize on Debian 13 | Accepted | ADR-0002 |
-| 2026-07 | Adopt Terraform for Infrastructure as Code | Accepted | ADR-0003 |
-| 2026-07 | Adopt Ansible for Configuration Management | Accepted | ADR-0004 |
-| 2026-07 | Use RKE2 as Kubernetes Distribution | Accepted | ADR-0005 |
-| 2026-07 | Adopt ArgoCD for GitOps | Accepted | ADR-0006 |
+| 2026-07-16 | Define project principles | Accepted | ADR-0001 |
+| 2026-07-16 | Use OCI CLI configuration for initial Terraform authentication | Accepted | ADR-0002 |
+| 2026-07-16 | Adopt a modular single-VCN network architecture | Accepted | ADR-0003 |
+| 2026-07-31 | Introduce a bootstrap Terraform layer for compartment creation | Accepted | ADR-0004 |
+| 2026-07-31 | Keep NAT Gateway disabled by default in the Always Free environment | Accepted | ADR-0005 |
 
 ---
 
