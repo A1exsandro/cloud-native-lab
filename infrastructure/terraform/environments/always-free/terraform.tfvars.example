@@ -6,4 +6,4 @@ region           = "sa-saopaulo-1"
 
 compartment_ocid = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxx"
 
-owner = "Alexsandro"
+owner = "your-name"
