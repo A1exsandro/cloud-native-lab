@@ -18,10 +18,19 @@ This module provisions the networking foundation for the Cloud Native Lab on Ora
 |------|-------------|
 | compartment_ocid | OCI compartment identifier |
 | vcn_cidr | CIDR block of the VCN |
+| public_subnet_cidr | CIDR block of the public subnet |
+| private_subnet_cidr | CIDR block of the private subnet |
 | display_name | Resource display name |
 | dns_label | DNS label |
+| create_nat_gateway | Whether to provision a NAT Gateway |
 | freeform_tags | Common resource tags |
 
 ## Outputs
 
-Outputs will be documented as resources are implemented.
+The module exposes identifiers for the VCN, gateways, route tables, subnets and NSGs.
+
+## Notes
+
+The NAT Gateway is implemented as an optional resource.
+
+For the Always Free environment, it should remain disabled until its eligibility or cost impact is explicitly confirmed for the tenancy.
