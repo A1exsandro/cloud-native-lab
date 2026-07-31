@@ -2,9 +2,12 @@
 
 This module provisions Identity and Access Management (IAM) resources.
 
-Future resources may include:
+Current resources:
 
 - Compartments
+
+Future resources may include:
+
 - Dynamic Groups
 - Policies
 
