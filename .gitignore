@@ -82,3 +82,5 @@ temp/
 *.zip
 *.tar
 *.gz
+# Terraform plan files
+*.tfplan
