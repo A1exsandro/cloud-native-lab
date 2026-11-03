@@ -110,3 +110,67 @@ Next steps:
 - Retry Compute provisioning when regional capacity permits.
 - Consider testing a smaller A1 configuration if necessary.
 - Review the administrator public IP periodically and update `admin_cidr` if it changes.
+
+---
+
+## 2026-11-03 — AWS Network Foundation
+
+### Summary
+
+Successfully provisioned the initial AWS networking infrastructure
+for the Cloud Native Lab using Terraform.
+
+### AWS Account and Authentication
+
+- AWS account configured.
+- IAM Identity Center enabled in `sa-east-1`.
+- Administrative identity: `cloud-native-admin`.
+- Permission set: `AdministratorAccess`.
+- AWS CLI profile: `cloud-native-lab`.
+- Authentication validated through temporary SSO credentials.
+- Monthly AWS budget configured: USD 10.
+
+### Network Implementation
+
+Created the initial AWS VPC architecture in São Paulo (`sa-east-1`).
+
+| Component | Configuration |
+|---|---|
+| VPC | 10.20.0.0/16 |
+| Public Subnet | 10.20.10.0/24 |
+| Private Subnet | 10.20.20.0/24 |
+| Availability Zone | sa-east-1a |
+| Internet Gateway | Created |
+| Public Route Table | Created |
+| Private Route Table | Created |
+| NAT Gateway | Not provisioned |
+
+### Terraform Result
+
+Deployment completed successfully:
+
+- 9 resources added.
+- 0 resources changed.
+- 0 resources destroyed.
+
+AWS account and region outputs were validated.
+
+### Architectural Decisions
+
+- AWS infrastructure uses an independent Terraform environment and state.
+- Public and private network segmentation was adopted.
+- NAT Gateway was excluded to avoid recurring costs.
+- Initial deployment uses a single Availability Zone.
+- Terraform is the infrastructure management tool.
+
+### Next Steps
+
+1. Review and commit AWS network architecture documentation.
+2. Implement Security Groups.
+3. Evaluate EC2 instance types and current pricing.
+4. Provision an initial compute instance.
+5. Prepare the foundation for future Kubernetes workloads.
+
+### Related ADR
+
+- ADR-0007: AWS Network Architecture.
