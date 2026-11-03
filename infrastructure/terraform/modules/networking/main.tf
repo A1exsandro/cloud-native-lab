@@ -99,7 +99,7 @@ resource "oci_core_network_security_group_security_rule" "public_ingress_ssh" {
   network_security_group_id = oci_core_network_security_group.public.id
   direction                 = "INGRESS"
   protocol                  = "6"
-  source                    = "0.0.0.0/0"
+  source                    = var.admin_cidr
   source_type               = "CIDR_BLOCK"
   description               = "Allow SSH from the internet."
 

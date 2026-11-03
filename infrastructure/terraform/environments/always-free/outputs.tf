@@ -52,3 +52,28 @@ output "private_nsg_id" {
   description = "OCI private NSG OCID."
   value       = module.networking.private_nsg_id
 }
+
+output "compute_instance_id" {
+  description = "OCI Compute instance OCID."
+  value       = module.compute.instance_id
+}
+
+output "compute_instance_name" {
+  description = "OCI Compute instance name."
+  value       = module.compute.instance_name
+}
+
+output "compute_public_ip" {
+  description = "Public IPv4 address of the compute instance."
+  value       = module.compute.public_ip
+}
+
+output "compute_private_ip" {
+  description = "Private IPv4 address of the compute instance."
+  value       = module.compute.private_ip
+}
+
+output "compute_shape" {
+  description = "OCI Compute instance shape."
+  value       = module.compute.shape
+}

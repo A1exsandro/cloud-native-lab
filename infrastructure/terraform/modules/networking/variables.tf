@@ -39,3 +39,9 @@ variable "create_nat_gateway" {
   type        = bool
   default     = false
 }
+
+variable "admin_cidr" {
+  description = "Administrative IPv4 CIDR allowed to access resources through SSH."
+  type        = string
+}
+
