@@ -174,3 +174,119 @@ AWS account and region outputs were validated.
 ### Related ADR
 
 - ADR-0007: AWS Network Architecture.
+
+---
+
+## 2026-11-03 — Local Workstation Preparation and Storage Optimization
+
+### Summary
+
+Started preparing the local Ubuntu workstation to become the primary development and virtualization environment for the Cloud Native Lab.
+
+The objective is to reduce infrastructure costs by prioritizing local resources before introducing additional remote infrastructure.
+
+### Initial Environment Assessment
+
+Workstation configuration:
+
+- Operating System: Ubuntu 24.04
+- CPU: AMD Ryzen 7 5800H
+- CPU Resources: 8 cores / 16 threads
+- Memory: Approximately 13.5 GiB
+- Storage: NVMe SSD
+- Virtualization: AMD-V / KVM support available
+- Container Runtime: Docker Engine 29.3.0
+
+### Storage Investigation
+
+Initial disk assessment identified critical storage pressure:
+
+- Root filesystem capacity: 247 GB.
+- Initial disk usage: approximately 231 GB.
+- Initial available space: approximately 4 GB.
+- Initial utilization: approximately 99%.
+
+The investigation identified significant storage consumption from:
+
+- Docker build cache.
+- Docker images and containers.
+- Node.js and package manager caches.
+- Android SDK and development tools.
+- Gradle dependencies and build caches.
+- Local development workspaces.
+
+### Docker Storage Optimization
+
+Docker storage usage was inspected using:
+
+`docker system df -v`
+
+The investigation identified approximately 36 GB of Docker build cache.
+
+The build cache was removed using:
+
+`docker builder prune -a`
+
+This operation recovered approximately 34 GB of disk space.
+
+Docker images, containers and persistent volumes were preserved.
+
+### Development Cache Investigation
+
+Additional cache directories were identified:
+
+- Yarn cache.
+- TypeScript cache.
+- Python pip cache.
+- Playwright browser cache.
+- Gradle caches.
+
+The npm cache cleanup was executed using:
+
+`npm cache clean --force`
+
+Other caches and development dependencies were inspected to identify further cleanup opportunities.
+
+### Final Storage Assessment
+
+After the cleanup activities:
+
+| Metric | Initial | Current |
+|---|---:|---:|
+| Filesystem capacity | 247 GB | 247 GB |
+| Used storage | 231 GB | 153 GB |
+| Available storage | 4 GB | 83 GB |
+| Utilization | 99% | 65% |
+
+Approximately 78 GB of storage was recovered during the investigation and cleanup activities.
+
+### Important Findings
+
+- The workstation supports hardware virtualization through AMD-V.
+- KVM kernel modules are available.
+- Docker is already installed and operational.
+- Ansible is not yet installed.
+- `virsh` and `virt-manager` are not yet installed.
+- Additional storage optimization opportunities remain in Android SDK and Gradle directories.
+
+### Architectural Considerations
+
+The local workstation will be prioritized as the initial development and virtualization environment.
+
+This approach is aligned with ADR-0009 — Multi-Cloud Strategy and Infrastructure Evolution.
+
+Local virtualization will be used to develop and validate infrastructure configurations before introducing additional remote resources.
+
+### Next Steps
+
+1. Review remaining storage optimization opportunities.
+2. Install and configure KVM and Libvirt.
+3. Install and configure Ansible.
+4. Create the first Debian 13 virtual machine.
+5. Establish a reproducible local infrastructure environment.
+6. Document the virtualization architecture and automation procedures.
+
+### Related ADRs
+
+- ADR-0001 — Project Principles.
+- ADR-0009 — Multi-Cloud Strategy and Infrastructure Evolution.
