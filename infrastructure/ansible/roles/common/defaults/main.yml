@@ -1,0 +1,17 @@
+---
+common_hostname: cnl-debian13-node01
+
+common_timezone: America/Cuiaba
+
+common_packages:
+  - curl
+  - wget
+  - vim
+  - git
+  - htop
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - sudo
+  - qemu-guest-agent

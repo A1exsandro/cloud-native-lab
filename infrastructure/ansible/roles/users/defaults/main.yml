@@ -1,0 +1,10 @@
+---
+users_admin:
+  - name: cnladmin
+    groups:
+      - sudo
+    shell: /bin/bash
+    state: present
+
+users_default_groups:
+  - sudo

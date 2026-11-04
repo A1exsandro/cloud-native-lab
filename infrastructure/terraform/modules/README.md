@@ -1,12 +1,14 @@
 # Terraform Modules
 
-This directory contains reusable Terraform modules.
+This directory contains reusable Terraform modules used to provision Oracle Cloud Infrastructure (OCI).
 
-Modules encapsulate infrastructure components to promote reuse, consistency and maintainability.
+Each module is responsible for a single infrastructure domain and can be reused across different environments.
 
-Examples of future modules include:
+## Available Modules
 
 - networking
 - compute
 - storage
-- security
+- identity
+
+Additional modules may be introduced as the platform evolves.

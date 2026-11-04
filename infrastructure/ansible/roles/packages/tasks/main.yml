@@ -1,0 +1,7 @@
+---
+- name: Install additional infrastructure tools
+  ansible.builtin.apt:
+    name: "{{ packages_extra }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600

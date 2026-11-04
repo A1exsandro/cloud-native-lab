@@ -1,0 +1,10 @@
+---
+- name: Bootstrap Cloud Native Lab nodes
+  hosts: local
+  become: true
+
+  roles:
+    - common
+    - users
+    - ssh
+    - packages

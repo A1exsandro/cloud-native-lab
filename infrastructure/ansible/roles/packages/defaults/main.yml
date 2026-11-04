@@ -1,0 +1,14 @@
+---
+packages_extra:
+  - htop
+  - tree
+  - jq
+  - rsync
+  - dnsutils
+  - net-tools
+  - tcpdump
+  - nmap
+  - traceroute
+  - iperf3
+  - bash-completion
+  - tmux
