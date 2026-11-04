@@ -84,3 +84,11 @@ temp/
 *.gz
 # Terraform plan files
 *.tfplan
+
+# -----------------------------------------------------------------------------
+# Kubernetes Secrets
+# -----------------------------------------------------------------------------
+
+platform/kubernetes/secrets/local/*
+!platform/kubernetes/secrets/local/.gitkeep
+platform/kubernetes/overlays/local/postgresql/secrets/*
