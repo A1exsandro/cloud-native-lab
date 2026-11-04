@@ -1,0 +1,36 @@
+---
+- name: Install OpenSSH server
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+    update_cache: true
+
+- name: Ensure SSH service is enabled and running
+  ansible.builtin.service:
+    name: "{{ ssh_service_name }}"
+    state: started
+    enabled: true
+
+- name: Configure SSH authentication
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/00-cloud-native-lab.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      PermitRootLogin {{ ssh_permit_root_login }}
+      PubkeyAuthentication {{ ssh_pubkey_authentication }}
+      PasswordAuthentication {{ ssh_password_authentication }}
+  notify: Restart SSH
+
+- name: Validate SSH configuration
+  ansible.builtin.command:
+    cmd: sshd -t
+  changed_when: false
+
+- name: Install SSH public key for cnladmin
+  ansible.posix.authorized_key:
+    user: cnladmin
+    state: present
+    key: "{{ lookup('file', ssh_authorized_key_path) }}"
+    manage_dir: true
