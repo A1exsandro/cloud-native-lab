@@ -1,0 +1,8 @@
+---
+ssh_service_name: ssh
+
+ssh_permit_root_login: "no"
+ssh_pubkey_authentication: "yes"
+
+ssh_password_authentication: "yes"
+ssh_authorized_key_path: "{{ lookup('env', 'HOME') }}/.ssh/id_rsa.pub"

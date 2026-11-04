@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: database
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/part-of: cloud-native-lab
+spec:
+  serviceName: postgresql
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgresql
+        app.kubernetes.io/part-of: cloud-native-lab
+
+    spec:
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: postgresql
+          image: postgres:18.6-bookworm
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: POSTGRES_USER
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: POSTGRES_PASSWORD
+
+            - name: PGDATA
+              value: /var/lib/postgresql/18/docker
+
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+
+          volumeMounts:
+            - name: postgresql-data
+              mountPath: /var/lib/postgresql
+
+      volumes:
+        - name: postgresql-data
+          persistentVolumeClaim:
+            claimName: postgresql-data
+            

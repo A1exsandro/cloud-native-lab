@@ -1,0 +1,8 @@
+---
+- name: Install Docker Engine on Cloud Native Lab nodes
+  hosts: local
+  become: true
+
+  roles:
+    - docker
+    
