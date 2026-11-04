@@ -1,0 +1,50 @@
+---
+- name: Install K3s prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create K3s configuration directory
+  ansible.builtin.file:
+    path: "{{ k3s_config_directory }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure K3s server
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ k3s_config_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart K3s
+
+- name: Download official K3s installer
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /usr/local/src/k3s-install.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install K3s server
+  ansible.builtin.command:
+    cmd: /bin/sh /usr/local/src/k3s-install.sh
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    INSTALL_K3S_EXEC: server
+  args:
+    creates: /etc/systemd/system/k3s.service
+
+- name: Ensure K3s service is enabled and running
+  ansible.builtin.systemd:
+    name: k3s
+    enabled: "{{ k3s_service_enabled }}"
+    state: "{{ k3s_service_state }}"
+    daemon_reload: true
