@@ -1,0 +1,20 @@
+---
+k3s_version: "v1.36.5+k3s1"
+
+k3s_node_ip: "{{ ansible_host }}"
+
+k3s_config_directory: /etc/rancher/k3s
+k3s_config_file: /etc/rancher/k3s/config.yaml
+
+k3s_service_state: started
+k3s_service_enabled: true
+
+k3s_write_kubeconfig_mode: "0640"
+
+k3s_disable_components: []
+
+k3s_admin_user: cnladmin
+k3s_admin_group: cnladmin
+k3s_admin_home: /home/cnladmin
+
+k3s_local_kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/cloud-native-lab.yaml"

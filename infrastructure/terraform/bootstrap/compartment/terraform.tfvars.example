@@ -1,0 +1,6 @@
+project_name             = "cloud-native-lab"
+region                   = "sa-saopaulo-1"
+tenancy_ocid             = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxx"
+compartment_name         = "cloud-native-lab"
+compartment_description  = "Dedicated compartment for Cloud Native Lab resources."
+owner                    = "your-name"
