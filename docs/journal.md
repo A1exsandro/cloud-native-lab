@@ -772,3 +772,128 @@ The second execution completed successfully without failures.
 10. Prepare the automation architecture for future Contabo, OCI and AWS implementations.
 
 ---
+
+## 2026-11-04 — Local PostgreSQL Deployment on K3s
+
+### Objective
+
+Deploy the first database service in the local Cloud Native Lab Kubernetes environment.
+
+The goal was to establish a reusable PostgreSQL foundation for future platform applications, starting with Keycloak and Vocabulary.
+
+### Environment
+
+- Operating System: Debian 13
+- Kubernetes Distribution: K3s
+- Kubernetes Version: v1.36.5+k3s1
+- Node: `cnl-debian13-node01`
+- Namespace: `database`
+- PostgreSQL Image: `postgres:18.6-bookworm`
+
+### Implementation
+
+The PostgreSQL deployment was organized using Kustomize, separating reusable base manifests from environment-specific configuration.
+
+The resulting structure:
+
+```text
+platform/kubernetes/
+├── base/
+│   └── postgresql/
+│       ├── kustomization.yaml
+│       ├── namespace.yaml
+│       ├── pvc.yaml
+│       ├── service.yaml
+│       └── statefulset.yaml
+├── overlays/
+│   └── local/
+│       └── postgresql/
+│           ├── kustomization.yaml
+│           └── secrets/
+│               └── postgres-password
+└── secrets/
+    └── local/
+```
+
+The deployment includes:
+
+- PostgreSQL StatefulSet with one replica.
+- PersistentVolumeClaim requesting 10 GiB.
+- `local-path` StorageClass.
+- Headless Kubernetes Service on port 5432.
+- Dedicated `database` namespace.
+- Kubernetes Secret generated through Kustomize `secretGenerator`.
+
+### Secret Management
+
+A local password file was generated and stored outside Git tracking.
+
+The `.gitignore` configuration was updated to prevent local credentials from being committed.
+
+Kustomize initially rejected references to files outside the overlay directory due to its security restrictions.
+
+The configuration was reorganized so that the password file resides inside the local overlay directory. This allowed Kustomize to generate the Secret without disabling its security protections.
+
+### Deployment and Validation
+
+The following resources were successfully created:
+
+- Namespace: `database`
+- Secret: `postgresql-credentials`
+- Service: `postgresql`
+- PersistentVolumeClaim: `postgresql-data`
+- StatefulSet: `postgresql`
+
+Validation results:
+
+| Component | Result |
+|---|---|
+| PostgreSQL Pod | Running |
+| StatefulSet | 1/1 Ready |
+| PersistentVolumeClaim | Bound |
+| Persistent Storage | 10 GiB |
+| StorageClass | local-path |
+| Service | Headless, port 5432 |
+| Container Restarts | 0 |
+
+PostgreSQL initialization completed successfully.
+
+The database logs confirmed that PostgreSQL 18.6 was ready to accept connections.
+
+A connection test was also performed inside the container:
+
+```sql
+SELECT version(), current_user, current_database();
+```
+
+The test successfully returned:
+
+- PostgreSQL version: 18.6
+- Current user: `postgres_admin`
+- Current database: `postgres_admin`
+
+This validated local database access. Password authentication over the Kubernetes network remains a separate validation task.
+
+### Lessons Learned
+
+- Kustomize restricts references to files outside the current build directory.
+- `secretGenerator` provides a convenient way to generate Kubernetes Secrets from local files.
+- Sensitive credentials must remain outside Git tracking.
+- StatefulSets and persistent volumes provide a suitable foundation for stateful workloads.
+- A successful Kubernetes deployment must be followed by application-level connectivity tests.
+
+### Future Notes
+
+The following tasks remain planned:
+
+1. Configure and verify password authentication for network connections.
+2. Review PostgreSQL authentication settings, including the local `trust` authentication warning observed during initialization.
+3. Create dedicated databases and users for Keycloak and Vocabulary.
+4. Implement a PostgreSQL backup strategy.
+5. Monitor memory consumption as additional platform services are deployed.
+
+### Milestone
+
+The first stateful database service was successfully deployed in the local Cloud Native Lab Kubernetes environment.
+
+This establishes the database foundation for the next platform components.
