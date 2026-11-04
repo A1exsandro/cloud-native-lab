@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This guide describes how to create and manage dedicated PostgreSQL users for applications running in the Cloud Native Lab Kubernetes environment.
+This guide describes how to create and manage dedicated PostgreSQL users and databases for applications running in the Cloud Native Lab Kubernetes environment.
 
 The recommended approach is to create one database user per application, following the principle of least privilege.
 
@@ -38,7 +38,7 @@ The expected prompt is:
 postgres_admin=#
 ```
 
-## 4. Create an application user
+## 4. Create an Application User
 
 Create a login role:
 
@@ -52,7 +52,7 @@ Expected result:
 CREATE ROLE
 ```
 
-### Set the password
+### Set the Password
 
 Use PostgreSQL's interactive password command:
 
@@ -62,7 +62,7 @@ Use PostgreSQL's interactive password command:
 
 Enter the password twice when prompted.
 
-**Security recommendations:**
+### Security Recommendations
 
 - Generate a unique password for each application.
 - Use a password manager or a securely stored local password file.
@@ -70,7 +70,7 @@ Enter the password twice when prompted.
 - Never include passwords in SQL scripts or documentation.
 - Do not share credentials in chat messages or logs.
 
-## 5. Verify the role
+## 5. Verify the Role
 
 List the role:
 
@@ -80,7 +80,21 @@ List the role:
 
 The role should exist without superuser privileges.
 
-## 6. Create the application database
+You can also inspect its attributes:
+
+```sql
+SELECT rolname, rolsuper, rolcreatedb, rolcanlogin
+FROM pg_roles
+WHERE rolname = 'keycloak_user';
+```
+
+Expected attributes:
+
+- `rolsuper`: false
+- `rolcreatedb`: false
+- `rolcanlogin`: true
+
+## 6. Create the Application Database
 
 Create a database owned by the dedicated application user:
 
@@ -88,11 +102,19 @@ Create a database owned by the dedicated application user:
 CREATE DATABASE keycloak OWNER keycloak_user;
 ```
 
+Expected result:
+
+```text
+CREATE DATABASE
+```
+
 This makes `keycloak_user` the owner of the database.
 
 The application should not use the PostgreSQL administrative account.
 
-## 7. Verify database ownership
+**Important:** Create the application role before creating its database, because the role must exist to become the database owner.
+
+## 7. Verify Database Ownership
 
 Run:
 
@@ -102,10 +124,22 @@ Run:
 
 Check that the database owner is `keycloak_user`.
 
-You can also inspect roles:
+You can also verify ownership using SQL:
 
 ```sql
-\du
+SELECT
+    datname AS database_name,
+    pg_catalog.pg_get_userbyid(datdba) AS owner
+FROM pg_database
+WHERE datname = 'keycloak';
+```
+
+Expected result:
+
+```text
+ database_name |     owner
+---------------+---------------
+ keycloak      | keycloak_user
 ```
 
 ## 8. Exit PostgreSQL
@@ -118,7 +152,7 @@ To leave the interactive PostgreSQL session:
 
 ## 9. Troubleshooting
 
-### Accidental unfinished SQL command
+### Accidental Unfinished SQL Command
 
 If the prompt changes from:
 
@@ -146,7 +180,7 @@ The prompt should return to:
 postgres_admin=#
 ```
 
-### Check whether a role already exists
+### Check Whether a Role Already Exists
 
 ```sql
 SELECT rolname, rolsuper, rolcreatedb, rolcanlogin
@@ -156,7 +190,17 @@ WHERE rolname = 'keycloak_user';
 
 Avoid executing `CREATE ROLE` again if the role already exists.
 
-### Change an existing user's password
+### Check Whether a Database Already Exists
+
+```sql
+SELECT datname
+FROM pg_database
+WHERE datname = 'keycloak';
+```
+
+Avoid executing `CREATE DATABASE` again if the database already exists.
+
+### Change an Existing User's Password
 
 ```sql
 \password keycloak_user
@@ -189,3 +233,12 @@ Password: stored in Kubernetes Secret
 ```
 
 The password must be supplied through the application's Kubernetes Secret, not hardcoded in its Deployment or ConfigMap.
+
+## 12. Current Application Database Status
+
+| Application | Database | User | Status |
+|---|---|---|---|
+| Keycloak | keycloak | keycloak_user | Created |
+| Vocabulary | vocabulary | vocabulary_user | Pending |
+
+This section should be updated as additional application databases are provisioned.
