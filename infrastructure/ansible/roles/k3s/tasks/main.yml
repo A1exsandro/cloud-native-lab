@@ -48,3 +48,64 @@
     enabled: "{{ k3s_service_enabled }}"
     state: "{{ k3s_service_state }}"
     daemon_reload: true
+
+- name: Create remote kubeconfig directory
+  ansible.builtin.file:
+    path: "{{ k3s_admin_home }}/.kube"
+    state: directory
+    owner: "{{ k3s_admin_user }}"
+    group: "{{ k3s_admin_group }}"
+    mode: "0700"
+
+- name: Configure kubeconfig for remote administrator
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ k3s_admin_home }}/.kube/config"
+    remote_src: true
+    owner: "{{ k3s_admin_user }}"
+    group: "{{ k3s_admin_group }}"
+    mode: "0600"
+
+- name: Create local kubeconfig directory
+  ansible.builtin.file:
+    path: "{{ k3s_local_kubeconfig | dirname }}"
+    state: directory
+    mode: "0700"
+  become: false
+  delegate_to: localhost
+
+- name: Fetch K3s kubeconfig to workstation
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ k3s_local_kubeconfig }}"
+    flat: true
+
+- name: Configure API server address in local kubeconfig
+  ansible.builtin.replace:
+    path: "{{ k3s_local_kubeconfig }}"
+    regexp: 'https://127\.0\.0\.1:6443'
+    replace: "https://{{ k3s_node_ip }}:6443"
+  delegate_to: localhost
+  become: false
+
+- name: Protect local kubeconfig permissions
+  ansible.builtin.file:
+    path: "{{ k3s_local_kubeconfig }}"
+    owner: "{{ lookup('env', 'USER') }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+
+- name: Configure K3s environment for administrator
+  ansible.builtin.lineinfile:
+    path: "{{ k3s_admin_home }}/.bashrc"
+    regexp: "^export {{ item.name }}="
+    line: "export {{ item.name }}={{ item.value }}"
+    owner: "{{ k3s_admin_user }}"
+    group: "{{ k3s_admin_group }}"
+    mode: "0644"
+  loop:
+    - name: KUBECONFIG
+      value: '"$HOME/.kube/config"'
+    - name: K3S_CONFIG_FILE
+      value: /dev/null
