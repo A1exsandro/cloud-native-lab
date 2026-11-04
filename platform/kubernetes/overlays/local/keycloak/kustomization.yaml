@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/keycloak
+
+secretGenerator:
+  - name: keycloak-credentials
+    namespace: identity
+    files:
+      - KC_DB_PASSWORD=secrets/keycloak-db-password
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=secrets/keycloak-admin-password
+
+generatorOptions:
+  disableNameSuffixHash: true
