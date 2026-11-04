@@ -290,3 +290,153 @@ Local virtualization will be used to develop and validate infrastructure configu
 
 - ADR-0001 — Project Principles.
 - ADR-0009 — Multi-Cloud Strategy and Infrastructure Evolution.
+
+**## 2026-11-04 — Local Debian Virtualization and Ansible Bootstrap**
+
+**### Summary**
+
+Successfully established the first reproducible Debian 13 virtual machine in the local Cloud Native Lab environment.
+
+The milestone covers local KVM/Libvirt virtualization, automated Debian installation, network configuration, SSH access, Ansible provisioning and Docker Engine installation.
+
+**### Virtualization Environment**
+
+Implemented the local virtualization environment using KVM and Libvirt.
+
+Completed:
+
+- Created the Debian 13 virtual machine `cnl-debian13-node01`.
+- Configured 2 vCPUs and 3 GB RAM.
+- Created a 30 GB QCOW2 virtual disk.
+- Configured Libvirt NAT networking through `virbr0`.
+- Configured DHCP reservation for the virtual machine.
+- Automated Debian installation using Preseed.
+- Configured the system timezone to `America/Cuiaba`.
+- Enabled SSH and serial console access.
+
+VM network configuration:
+
+| Component | Configuration |
+|---|---|
+| VM | cnl-debian13-node01 |
+| Operating System | Debian 13 |
+| Kernel | 6.12.115 |
+| vCPUs | 2 |
+| Memory | 3 GB |
+| Virtual Disk | 30 GB |
+| Network | Libvirt default (NAT) |
+| IP Address | 192.168.122.176 |
+| Gateway | 192.168.122.1 |
+| SSH | Port 22 |
+
+A DHCP reservation was configured using the VM's MAC address to maintain a consistent IP address.
+
+**### Network and Connectivity**
+
+Completed:
+
+- Configured Libvirt NAT networking.
+- Enabled IP forwarding.
+- Added the required UFW forwarding rule between `virbr0` and `wlo1`.
+- Confirmed DHCP address assignment.
+- Successfully established SSH connectivity from the Ubuntu host.
+
+**### Ansible Bootstrap**
+
+Implemented and executed the initial Ansible provisioning workflow.
+
+The bootstrap playbook includes:
+
+- Common system configuration.
+- Hostname and timezone configuration.
+- APT package updates and upgrades.
+- Essential infrastructure packages.
+- QEMU Guest Agent.
+- OpenSSH server configuration.
+- SSH public key deployment.
+- Additional infrastructure tools.
+
+The first execution completed successfully.
+
+Ansible execution result:
+
+| Metric | Result |
+|---|---:|
+| Successful tasks | 14 |
+| Changed tasks | 4 |
+| Failed tasks | 0 |
+| Unreachable hosts | 0 |
+
+**### Idempotency Validation**
+
+Executed the bootstrap playbook a second time to validate idempotency.
+
+Result:
+
+- 13 tasks completed successfully.
+- 0 changes.
+- 0 failures.
+- 0 unreachable hosts.
+
+This confirms that the bootstrap playbook maintains the desired system state without unnecessary modifications on subsequent executions.
+
+**### Docker Engine Installation**
+
+Implemented and executed the independent Docker Ansible role.
+
+Installed components:
+
+- Docker Engine Community.
+- Docker CLI.
+- Containerd.
+- Docker Buildx.
+- Docker Compose Plugin.
+
+The Docker service was successfully installed and enabled.
+
+The administrative user `cnladmin` was configured as a member of the `docker` group.
+
+Initial validation confirmed Docker Engine and Docker Compose client availability.
+
+A permission error occurred when attempting to access `/var/run/docker.sock` immediately after installation. This is expected when the current login session has not yet refreshed its group membership.
+
+Docker container execution remains pending validation after reconnecting the SSH session.
+
+**### Engineering Decisions**
+
+- Kept Docker installation separate from the general Debian bootstrap.
+- Maintained independent Ansible roles for system preparation and container runtime installation.
+- Used the official Docker APT repository.
+- Adopted DHCP reservation for predictable local VM addressing.
+- Retained SSH key-based administration.
+- Used local virtualization as the initial infrastructure validation environment.
+
+**### Lessons Learned**
+
+- Libvirt NAT forwarding must be compatible with the host firewall configuration.
+- Debian installation and post-installation serial console configuration require separate consideration.
+- Ansible privilege escalation requires an explicit become password when credentials are not stored.
+- Linux group membership changes require a new login session to take effect.
+- Idempotency validation is essential before expanding infrastructure automation.
+
+**### Current State**
+
+- Local KVM/Libvirt environment operational.
+- Debian 13 virtual machine provisioned.
+- SSH connectivity validated.
+- DHCP reservation configured.
+- Ansible bootstrap completed.
+- Bootstrap idempotency confirmed.
+- Docker Engine and Compose Plugin installed.
+- Docker socket permissions awaiting final validation.
+
+**### Next Steps**
+
+1. Validate Docker access after reconnecting the SSH session.
+2. Execute the `hello-world` container.
+3. Validate Docker role idempotency.
+4. Review and commit the Docker provisioning implementation.
+5. Expand the local infrastructure automation.
+6. Prepare the environment for future RKE2 cluster deployment.
+
+---
