@@ -1,6 +1,10 @@
 write-kubeconfig-mode: "{{ k3s_write_kubeconfig_mode }}"
 
 node-ip: "{{ k3s_node_ip }}"
+
+tls-san:
+  - "{{ k3s_api_endpoint }}"
+
 {% if k3s_disable_components | length > 0 %}
 disable:
 {% for component in k3s_disable_components %}
