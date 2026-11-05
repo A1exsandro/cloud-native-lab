@@ -21,8 +21,16 @@
     name: "{{ common_packages }}"
     state: present
 
+- name: Install QEMU Guest Agent
+  ansible.builtin.apt:
+    name: qemu-guest-agent
+    state: present
+  when: common_install_qemu_guest_agent | bool
+
 - name: Ensure QEMU Guest Agent is enabled and running
   ansible.builtin.service:
     name: qemu-guest-agent
     state: started
     enabled: true
+  when: common_install_qemu_guest_agent | bool
+  

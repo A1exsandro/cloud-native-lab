@@ -1,6 +1,6 @@
 ---
 - name: Bootstrap Cloud Native Lab nodes
-  hosts: local
+  hosts: k3s_nodes
   become: true
 
   roles:
@@ -8,3 +8,4 @@
     - users
     - ssh
     - packages
+    
