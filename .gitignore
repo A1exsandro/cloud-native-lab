@@ -93,3 +93,7 @@ platform/kubernetes/secrets/local/*
 !platform/kubernetes/secrets/local/.gitkeep
 platform/kubernetes/overlays/local/postgresql/secrets/*
 platform/kubernetes/overlays/local/*/secrets/*
+
+# Kubernetes secrets
+platform/kubernetes/overlays/**/secrets/*
+!platform/kubernetes/overlays/**/secrets/.gitkeep
