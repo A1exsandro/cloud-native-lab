@@ -3,6 +3,8 @@ common_hostname: cnl-debian13-node01
 
 common_timezone: America/Cuiaba
 
+common_install_qemu_guest_agent: true
+
 common_packages:
   - curl
   - wget
@@ -14,4 +16,4 @@ common_packages:
   - gnupg
   - lsb-release
   - sudo
-  - qemu-guest-agent
+  

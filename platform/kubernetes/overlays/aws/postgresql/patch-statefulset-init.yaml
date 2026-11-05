@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: database
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgresql
+          env:
+            - name: KEYCLOAK_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: KEYCLOAK_DB_PASSWORD
+          volumeMounts:
+            - name: postgresql-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: postgresql-init
+          configMap:
+            name: postgresql-init
+            defaultMode: 0755
+            
