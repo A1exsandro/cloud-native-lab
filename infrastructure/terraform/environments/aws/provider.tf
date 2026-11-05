@@ -1,6 +1,6 @@
 provider "aws" {
-  profile = "cloud-native-lab"
-  region  = "sa-east-1"
+  profile = "cloud-native-lab-wife"
+  region  = "us-east-2"
 
   default_tags {
     tags = {
