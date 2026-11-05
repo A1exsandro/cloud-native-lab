@@ -6,3 +6,13 @@ resources:
   - pvc.yaml
   - service.yaml
   - statefulset.yaml
+
+configMapGenerator:
+  - name: postgresql-init
+    namespace: database
+    files:
+      - init/01-create-keycloak-db.sh
+
+generatorOptions:
+  disableNameSuffixHash: true
+  

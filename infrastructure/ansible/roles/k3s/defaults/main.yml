@@ -2,6 +2,7 @@
 k3s_version: "v1.36.5+k3s1"
 
 k3s_node_ip: "{{ ansible_host }}"
+k3s_api_endpoint: "{{ k3s_node_ip }}"
 
 k3s_config_directory: /etc/rancher/k3s
 k3s_config_file: /etc/rancher/k3s/config.yaml
