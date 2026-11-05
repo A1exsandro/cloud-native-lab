@@ -1129,3 +1129,233 @@ The Cloud Native Lab AWS Ohio environment successfully reached its first externa
 PostgreSQL is operational, Keycloak is connected to the database, and public HTTPS is working with an automatically managed Let's Encrypt certificate.
 
 This establishes the identity and database foundation for the Vocabulary application deployment.
+
+## 2026-11-05 — Private Container Registry and MinIO Community Deployment
+
+### Objective
+
+Establish a private container image registry and an S3-compatible object storage service inside the Cloud Native Lab AWS Ohio Kubernetes cluster.
+
+The objective was to provide reusable infrastructure for application image distribution and object storage, preparing the environment for the deployment of the Vocabulary API and frontend.
+
+### Environment
+
+- Cloud provider: AWS
+- Region: us-east-2 (Ohio)
+- Kubernetes distribution: K3s
+- Kubernetes version: v1.36.5+k3s1
+- Node: cnl-aws-ohio-node01
+- Operating system: Debian GNU/Linux 13 (Trixie)
+- Container runtime: containerd
+- Ingress controller: Traefik
+- Certificate management: cert-manager
+- Certificate issuer: Let's Encrypt production
+- DNS domain: nst.art.br
+
+### Private Container Registry
+
+Deployed CNCF Distribution Registry 3 as the private container image registry for Cloud Native Lab.
+
+Configuration:
+
+- Namespace: registry
+- Image: registry:3.1.2
+- Replicas: 1
+- Service type: ClusterIP
+- Internal port: 5000
+- Persistent storage: 5 GiB
+- StorageClass: local-path
+- Storage backend: filesystem
+- Authentication: HTTP Basic Authentication using bcrypt
+- External endpoint: https://registry.nst.art.br
+- TLS: cert-manager with Let's Encrypt
+- Ingress controller: Traefik
+
+The registry uses a persistent volume claim named registry-data and stores image layers in the filesystem.
+
+Authentication is configured through a Kubernetes Secret generated from a local htpasswd file. The internal registry HTTP secret is also stored in a Kubernetes Secret.
+
+Both credential files are excluded from Git through .gitignore.
+
+The registry is independent of MinIO, avoiding a circular dependency between image distribution and object storage.
+
+### Registry Validation
+
+The deployment was validated successfully:
+
+- Registry Pod reached Running state.
+- Persistent volume claim reached Bound state.
+- Internal ClusterIP Service was created.
+- Ingress was configured for registry.nst.art.br.
+- HTTPS access was successfully established.
+- Unauthenticated API requests returned HTTP 401.
+- Authenticated requests using registry-admin returned HTTP 200.
+- Docker authentication and subsequent image push/pull testing were prepared as the registry usage workflow.
+
+The registry endpoint is:
+
+https://registry.nst.art.br
+
+Image naming convention:
+
+registry.nst.art.br/<application>:<version>
+
+Examples:
+
+- registry.nst.art.br/vocabulary-api:<version>
+- registry.nst.art.br/vocabulary-front:<version>
+- registry.nst.art.br/minio-community:<version>
+
+### MinIO Community Image
+
+Created a dedicated Dockerfile to build MinIO Community from its official source repository.
+
+The build process uses a multi-stage Docker image:
+
+- Build environment: Go 1.24.8
+- Runtime environment: Debian 13 slim
+- Source repository: github.com/minio/minio
+- Source revision: 7aac2a2c5b7c882e68c1ce017d8256be2feea27f
+
+The resulting image was published to the private registry using the tag:
+
+registry.nst.art.br/minio-community:7aac2a2
+
+The image reported the following application version during validation:
+
+DEVELOPMENT.2026-02-12T20-18-48Z
+
+This build is based on the MinIO Community source code. The upstream repository was archived in April 2026, so this deployment requires maintaining the build process and evaluating future security and compatibility risks.
+
+### MinIO Kubernetes Deployment
+
+Deployed MinIO Community as a single-replica StatefulSet.
+
+Configuration:
+
+- Namespace: storage
+- Workload: StatefulSet
+- Replicas: 1
+- S3 API port: 9000
+- Console port: 9001
+- Service type: ClusterIP
+- Persistent storage: 10 GiB
+- StorageClass: local-path
+- Storage backend: filesystem
+- Image registry: registry.nst.art.br
+
+The deployment uses a dedicated Kubernetes Secret for MinIO root credentials.
+
+A separate imagePullSecret provides Kubernetes access to the private container registry.
+
+Two Services were configured:
+
+- minio: S3 API and administrative console.
+- minio-headless: StatefulSet network identity.
+
+The S3 API is internally accessible through:
+
+http://minio.storage.svc.cluster.local:9000
+
+The administrative console is available through port-forwarding:
+
+kubectl-aws port-forward -n storage svc/minio 9001:9001
+
+No public Ingress was created for MinIO. Both interfaces remain internal to the cluster, reducing unnecessary external exposure.
+
+### MinIO Validation
+
+The deployment was validated successfully:
+
+- MinIO StatefulSet reached Running state.
+- MinIO Pod reached 1/1 Ready.
+- Persistent volume claim was provisioned and Bound.
+- MinIO logs confirmed successful initialization.
+- S3 API started on port 9000.
+- Web console started on port 9001.
+- Administrative console access was confirmed using the locally stored root credentials.
+
+### Secret Management
+
+Sensitive values are stored locally and generated as Kubernetes Secrets.
+
+Registry credentials:
+
+- registry-auth
+- registry-runtime
+
+MinIO credentials:
+
+- minio-credentials
+
+Image pull credentials:
+
+- registry-pull-credentials
+
+Secret source files are stored under the respective AWS overlay secrets directories.
+
+The .gitignore configuration excludes these files from version control while preserving .gitkeep placeholders.
+
+No passwords or authentication tokens are committed to the repository.
+
+### Storage and Availability Considerations
+
+Both services use the K3s local-path StorageClass.
+
+Registry storage allocation: 5 GiB.
+
+MinIO storage allocation: 10 GiB.
+
+The current AWS EC2 instance has a 40 GiB EBS volume.
+
+The local-path provisioner does not support dynamic PVC expansion through Kubernetes in the current configuration. Storage capacity must therefore be monitored at the node filesystem level.
+
+Both services run as single replicas on a single K3s node. They do not provide high availability or node-level storage redundancy.
+
+Future storage improvements may include Longhorn or another storage backend with volume expansion and replication capabilities.
+
+### Git and Version Control
+
+The implementation was consolidated in the feature branch:
+
+feature/private-registry-minio
+
+Implementation commits:
+
+- dab5f7e — feat(kubernetes): deploy private container registry
+- 544d4ee — feat(kubernetes): deploy private registry and MinIO
+
+The implementation was integrated into develop and subsequently promoted to main.
+
+Release merge commit:
+
+- 7580dcf — release: deploy private registry and MinIO
+
+### Lessons Learned
+
+- A private registry provides a central image distribution point for all application repositories.
+- Keeping the registry independent of MinIO avoids circular service dependencies.
+- Image pull credentials must be configured separately inside Kubernetes.
+- Registry authentication must be protected by HTTPS.
+- Locally generated secrets must remain outside Git.
+- Persistent volumes are essential for registry layers and object storage.
+- Single-node local-path storage is suitable for the initial environment but does not provide high availability.
+- Building MinIO from source requires pinning the source revision and maintaining a reproducible build process.
+
+### Future Notes
+
+- Configure automated image builds and publishing through GitHub Actions.
+- Establish image versioning conventions for application repositories.
+- Create dedicated MinIO application credentials with restricted permissions.
+- Create the vocabulary bucket.
+- Validate S3 operations, including bucket creation, upload, download and persistence.
+- Integrate MinIO with vocabulary-api.
+- Deploy the Vocabulary API using the private registry.
+- Deploy the Vocabulary frontend using the private registry.
+- Evaluate storage expansion and backup strategies.
+
+### Milestone
+
+Private container image distribution and S3-compatible object storage are now available in the Cloud Native Lab AWS Ohio cluster.
+
+The infrastructure is prepared for the next milestone: deploying the Vocabulary API with PostgreSQL, MinIO and Keycloak integration.
