@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/postgresql
+
+secretGenerator:
+  - name: postgresql-credentials
+    namespace: database
+    literals:
+      - POSTGRES_USER=postgres_admin
+      - POSTGRES_DB=postgres
+    files:
+      - POSTGRES_PASSWORD=secrets/postgres-password
+      - KEYCLOAK_DB_PASSWORD=secrets/keycloak-db-password
+
+patches:
+  - path: patch-statefulset-init.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+  
