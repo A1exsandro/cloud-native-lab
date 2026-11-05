@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - ../../../base/keycloak
+  - ingress.yaml
 
 secretGenerator:
   - name: keycloak-credentials
@@ -10,6 +11,9 @@ secretGenerator:
     files:
       - KC_DB_PASSWORD=secrets/keycloak-db-password
       - KC_BOOTSTRAP_ADMIN_PASSWORD=secrets/keycloak-admin-password
+
+patches:
+  - path: patch-deployment.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
