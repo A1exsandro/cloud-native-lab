@@ -1,7 +1,8 @@
 ---
 - name: Install Kubernetes with K3s
-  hosts: local
+  hosts: k3s_nodes
   become: true
 
   roles:
     - k3s
+    
