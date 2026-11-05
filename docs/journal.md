@@ -897,3 +897,235 @@ The following tasks remain planned:
 The first stateful database service was successfully deployed in the local Cloud Native Lab Kubernetes environment.
 
 This establishes the database foundation for the next platform components.
+
+## 2026-11-05 — AWS Ohio PostgreSQL, Keycloak and HTTPS Deployment
+
+### Objective
+
+Deploy the core identity and database services in the Cloud Native Lab AWS environment.
+
+The goal was to establish a production-oriented foundation for future applications, including Vocabulary, using K3s, PostgreSQL, Keycloak, Traefik, and cert-manager.
+
+### Environment
+
+- Cloud Provider: AWS
+- Region: `us-east-2` (Ohio)
+- Operating System: Debian 13
+- Instance Type: `m7i-flex.large`
+- Instance Resources: 2 vCPU, 8 GiB RAM
+- Root Volume: 40 GiB gp3
+- Kubernetes Distribution: K3s
+- Kubernetes Version: v1.36.5+k3s1
+- Container Runtime: containerd 2.3.4-k3s1
+- Node: `cnl-aws-ohio-node01`
+- Node Private IP: `10.20.10.125`
+- PostgreSQL Image: `postgres:18.6-bookworm`
+- Keycloak Image: `quay.io/keycloak/keycloak:26.8.1`
+
+### Infrastructure and Access
+
+The AWS environment was provisioned using Terraform.
+
+The infrastructure includes:
+
+- VPC with CIDR `10.20.0.0/16`.
+- Public subnet for the K3s node.
+- Internet Gateway and public routing.
+- EC2 Security Group with restricted SSH and Kubernetes API access.
+- Public HTTP and HTTPS access for application traffic.
+- K3s configured as a single-node cluster.
+
+A dedicated kubeconfig was configured on the workstation, using the `kubectl-aws` alias to avoid accidentally targeting the work production cluster.
+
+### PostgreSQL Deployment
+
+PostgreSQL was deployed in the `database` namespace using Kustomize.
+
+The AWS overlay reuses the PostgreSQL base manifests and provides environment-specific credentials.
+
+The deployment includes:
+
+- StatefulSet with one replica.
+- PersistentVolumeClaim requesting 10 GiB.
+- `local-path` StorageClass.
+- Headless Service on port 5432.
+- Kubernetes Secret generated through Kustomize.
+- Initialization script mounted through a ConfigMap.
+
+A database and dedicated user for Keycloak were created during PostgreSQL initialization:
+
+- Database: `keycloak`
+- User: `keycloak_user`
+- Administrative database user: `postgres_admin`
+
+Validation confirmed that the database and role were created successfully and that `keycloak_user` could connect to the `keycloak` database.
+
+The PostgreSQL pod reached `1/1 Ready`, and the PVC reached `Bound`.
+
+### Secret Management
+
+Environment-specific credentials are stored in local files under the AWS overlays and excluded from Git tracking.
+
+Kustomize `secretGenerator` is used to create Kubernetes Secrets.
+
+During deployment, a password authentication mismatch was identified between PostgreSQL and Keycloak.
+
+The investigation revealed that password files generated with `openssl rand -hex 32` contained an additional newline character.
+
+The administrative password file was regenerated using:
+
+```bash
+openssl rand -hex 32 | tr -d '\n' > keycloak-admin-password
+```
+
+The resulting password contains exactly 64 bytes.
+
+The Keycloak administrative password was reset using the official `kcadm.sh` administration utility.
+
+No PostgreSQL PVC or Keycloak database data was deleted during recovery.
+
+### Keycloak Deployment
+
+Keycloak 26.8.1 was deployed in the `identity` namespace.
+
+The deployment uses PostgreSQL through the internal Kubernetes Service:
+
+```text
+postgresql.database.svc.cluster.local:5432
+```
+
+The initial startup failed because PostgreSQL rejected the password supplied by Keycloak.
+
+After correcting the database password, Keycloak successfully connected to PostgreSQL, initialized its database schema, and completed the master realm bootstrap.
+
+Validation confirmed:
+
+- Keycloak Pod: `1/1 Running`
+- Deployment: `1/1 Available`
+- Internal Service: `ClusterIP`, port 8080
+- PostgreSQL connectivity: successful
+- Master realm initialization: successful
+
+### DNS and Public Access
+
+The following DNS records were configured to point to the AWS EC2 public IP:
+
+- `keycloak.nst.art.br`
+- `api.vocabulary.nst.art.br`
+- `vocabulary.nst.art.br`
+
+DNS resolution was verified using `dig`.
+
+The public DNS records resolved to the AWS instance.
+
+### cert-manager and Let's Encrypt
+
+cert-manager version `v1.21.3` was installed using the official release manifest.
+
+The installation created the required CRDs and the following components:
+
+- cert-manager
+- cert-manager-cainjector
+- cert-manager-webhook
+
+All three Deployments successfully reached their ready state.
+
+A production ACME ClusterIssuer was configured:
+
+- Name: `letsencrypt-prod`
+- Certificate Authority: Let's Encrypt Production
+- Challenge: HTTP-01
+- Ingress Controller: Traefik
+
+The ACME account was successfully registered.
+
+### Keycloak HTTPS Ingress
+
+A Kubernetes Ingress was created for:
+
+```text
+keycloak.nst.art.br
+```
+
+The Ingress uses Traefik and cert-manager annotations.
+
+The certificate was successfully issued and stored in the Kubernetes Secret:
+
+```text
+identity/keycloak-tls
+```
+
+Certificate validation confirmed:
+
+- Certificate: `keycloak-tls`
+- Status: `Ready=True`
+- Not Before: 2026-11-05
+- Expiration: 2027-02-03
+- Scheduled Renewal: 2027-01-04
+
+The Keycloak deployment was configured with:
+
+- HTTP enabled internally.
+- Public HTTPS hostname.
+- Forwarded proxy headers using `xforwarded`.
+
+Public HTTPS validation returned:
+
+```text
+HTTP/2 302
+location: https://keycloak.nst.art.br/admin/
+```
+
+The OpenID Connect discovery endpoint also returned the expected metadata, including the public HTTPS issuer:
+
+```text
+https://keycloak.nst.art.br/realms/master
+```
+
+This confirmed successful external access and correct issuer configuration.
+
+### Administrative Account Recovery
+
+The initial bootstrap administrator password contained a trailing newline, causing login failures.
+
+The administrative session was recovered using the password stored in the running Keycloak container and the `kcadm.sh` utility.
+
+A permanent administrative user named `cnl-admin` was created and enabled.
+
+The administrative role configuration is still under investigation. The temporary bootstrap administrator must remain available until the permanent account has been fully validated.
+
+The temporary account has not yet been removed.
+
+### Lessons Learned
+
+- Dedicated kubeconfig aliases help prevent accidental operations against unrelated Kubernetes clusters.
+- Kustomize overlays provide a reusable way to separate local and AWS configurations.
+- Password files generated by OpenSSL must be handled carefully because the default output includes a trailing newline.
+- PostgreSQL initialization scripts execute only during initial database initialization.
+- Keycloak bootstrap environment variables do not automatically reset credentials on subsequent restarts.
+- `kcadm.sh` is useful for recovering and managing Keycloak administrative accounts.
+- cert-manager can automate Let's Encrypt certificate issuance and renewal through HTTP-01 challenges.
+- Traefik can terminate public HTTPS while Keycloak continues using HTTP internally.
+- The public OpenID Connect issuer must match the externally accessible HTTPS hostname.
+
+### Future Notes
+
+The following tasks remain planned:
+
+1. Complete permanent Keycloak administrator role assignment and remove the temporary bootstrap account after validation.
+2. Review and harden public access to the Keycloak administration console.
+3. Deploy the Vocabulary FastAPI backend.
+4. Configure JWT validation between Vocabulary API and Keycloak.
+5. Deploy the React frontend.
+6. Configure public Ingress resources for the API and frontend.
+7. Implement PostgreSQL backup and recovery procedures.
+8. Review persistent storage and disk capacity on the EC2 instance.
+9. Introduce GitOps reconciliation with ArgoCD after the application deployment structure is stable.
+
+### Milestone
+
+The Cloud Native Lab AWS Ohio environment successfully reached its first externally accessible identity service.
+
+PostgreSQL is operational, Keycloak is connected to the database, and public HTTPS is working with an automatically managed Let's Encrypt certificate.
+
+This establishes the identity and database foundation for the Vocabulary application deployment.
