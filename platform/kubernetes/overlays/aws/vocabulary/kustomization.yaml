@@ -5,4 +5,4 @@ resources:
   - ../../../base/vocabulary
   - configmap.yaml
   - ingress.yaml
-  
+  - app-ingress.yaml
