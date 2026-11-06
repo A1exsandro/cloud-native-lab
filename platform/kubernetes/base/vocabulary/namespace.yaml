@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vocabulary
+  labels:
+    app.kubernetes.io/part-of: vocabulary
+    app.kubernetes.io/managed-by: kustomize
+    

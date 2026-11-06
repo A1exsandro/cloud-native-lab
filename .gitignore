@@ -101,3 +101,5 @@ platform/kubernetes/overlays/**/secrets/*
 # Registry credentials
 platform/kubernetes/overlays/aws/registry/secrets/*
 !platform/kubernetes/overlays/aws/registry/secrets/.gitkeep
+
+platform/kubernetes/overlays/aws/vocabulary/secret.yaml
