@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vocabulary-api-config
+  namespace: vocabulary
+
+data:
+  # Application
+  TZ: America/Cuiaba
+  CORS_ALLOW_ORIGINS: "https://vocabulary.nst.art.br"
+
+  # MinIO / S3
+  S3_ENDPOINT: "http://minio.storage.svc.cluster.local:9000"
+  S3_PUBLIC_ENDPOINT: "https://s3.nst.art.br"
+  S3_AUDIO_BUCKET_NAME: "vocabulary-audio"
+  S3_IMAGE_BUCKET_NAME: "vocabulary-images"
+  S3_REGION: "us-east-1"
+
+  # Keycloak
+  KEYCLOAK_URL: "https://keycloak.nst.art.br"
+  KEYCLOAK_REALM: "Vocabulary"
+  KEYCLOAK_ADMIN_REALM: "Vocabulary"

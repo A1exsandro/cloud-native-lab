@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vocabulary-api
+  namespace: vocabulary
+  labels:
+    app.kubernetes.io/name: vocabulary-api
+    app.kubernetes.io/part-of: vocabulary
+
+spec:
+  type: ClusterIP
+
+  selector:
+    app.kubernetes.io/name: vocabulary-api
+
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP
+      
