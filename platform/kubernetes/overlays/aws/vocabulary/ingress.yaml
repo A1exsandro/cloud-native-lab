@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vocabulary-api
+  namespace: vocabulary
+
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+spec:
+  ingressClassName: traefik
+
+  tls:
+    - hosts:
+        - api.vocabulary.nst.art.br
+      secretName: vocabulary-api-tls
+
+  rules:
+    - host: api.vocabulary.nst.art.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vocabulary-api
+                port:
+                  number: 8000
+                  

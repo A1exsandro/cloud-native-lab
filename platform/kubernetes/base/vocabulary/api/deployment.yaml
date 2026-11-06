@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vocabulary-api
+  namespace: vocabulary
+  labels:
+    app.kubernetes.io/name: vocabulary-api
+    app.kubernetes.io/part-of: vocabulary
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vocabulary-api
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vocabulary-api
+        app.kubernetes.io/part-of: vocabulary
+
+    spec:
+      imagePullSecrets:
+        - name: registry-pull-credentials
+
+      containers:
+        - name: vocabulary-api
+          image: registry.nst.art.br/vocabulary-api:0.0.1
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: vocabulary-api-config
+
+            - secretRef:
+                name: vocabulary-api-secret
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
