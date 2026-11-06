@@ -1430,3 +1430,34 @@ Images `vocabulary-api:0.0.2` and `0.0.3` were built from the uncommitted workin
 - Disable SQLAlchemy statement logging, which writes user identifiers to the API logs.
 - Resolve the circular import between `get_words_by_user` and `app.modules`.
 - Review Registry tags against the images in use before any further cleanup.
+
+### End-of-Day Status
+
+The application is working in production, but the source of its running versions has not been published yet.
+
+| Repository | Branch | Local | Remote branch | Status |
+|---|---|---|---|---|
+| my-vocabulary | main | 6fa7da3 | 6fa7da3 | Published; no `develop` branch on the remote |
+| vocabulary-api | feature/vocabulary-api-container | fa58b01 | 722568b | Two commits not pushed; `main` is at 3f5c874 and there is no remote `develop` |
+| cloud-native-lab | feature/vocabulary-auth-media-fixes | this branch | Not created | Not pushed; `main` is at 09dc293 and `develop` at f4d8c27 |
+
+Registry tags found by direct lookup:
+
+| Image | Tags present | In use |
+|---|---|---|
+| vocabulary-app | 0.0.1, 0.0.2, 0.0.3, 0.0.4, 0.0.5 | 0.0.5 |
+| vocabulary-api | 0.0.1, 0.0.2, 0.0.3 | 0.0.3 |
+| minio-community | 7aac2a2 | Not checked in this work |
+
+The earlier cleanup of `vocabulary-app` tags `0.0.2` to `0.0.4` is not reflected in the Registry. Tag `0.0.1` cannot run under the current non-root Deployment.
+
+Do not run `kubectl-aws apply -k` from `main` until this branch is merged, because `main` still has `vocabulary-app:0.0.4` and `vocabulary-api:0.0.1`.
+
+### Next Steps
+
+1. Push the `vocabulary-api` and `cloud-native-lab` branches.
+2. Merge the `cloud-native-lab` branch into `develop`, then promote it to `main`.
+3. Confirm that `kubectl-aws diff -k` from `main` reports no changes.
+4. Define how `vocabulary-api` reaches `main`, since its deployed code is only on a feature branch.
+5. Decide which Registry tags to keep, then clean up without removing images in use or rollback targets.
+6. Build the next API image from a committed revision and turn off SQLAlchemy statement logging.
