@@ -9,6 +9,9 @@ data:
   TZ: America/Cuiaba
   CORS_ALLOW_ORIGINS: "https://vocabulary.nst.art.br"
 
+  # OpenRouter
+  OPENROUTER_MODEL: "nvidia/nemotron-3.5-lightning:free"
+
   # MinIO / S3
   S3_ENDPOINT: "http://minio.storage.svc.cluster.local:9000"
   S3_PUBLIC_ENDPOINT: "https://s3.nst.art.br"
