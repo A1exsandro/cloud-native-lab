@@ -1359,3 +1359,114 @@ Release merge commit:
 Private container image distribution and S3-compatible object storage are now available in the Cloud Native Lab AWS Ohio cluster.
 
 The infrastructure is prepared for the next milestone: deploying the Vocabulary API with PostgreSQL, MinIO and Keycloak integration.
+
+## 2026-11-06 — Vocabulary Authentication, AI Generation and Media Fixes
+
+### Objective
+
+Resolve the HTTP 401 errors between the Vocabulary frontend and API, then restore the features that the 401 had hidden: category and text generation, and word images and audio.
+
+### Root Causes
+
+| Symptom | Cause | Evidence |
+|---|---|---|
+| 401 with "bearer token is required" | The running frontend image had no Axios interceptor | No `Bearer` in the served bundle; no introspection event in Keycloak |
+| 401 with "token invalid or expired" | `vocabulary-api-admin` was not in the token audience | Keycloak `INTROSPECT_TOKEN_ERROR`: "Client 'vocabulary-api-admin' is not in the token audience" |
+| 500 on category and text generation | The hard-coded OpenRouter model was retired | `KeyError: 'choices'`; OpenRouter returned HTTP 404 for the model |
+| Word and text media did not load | Presigned URLs used the internal cluster endpoint | Generated URLs pointed to `minio.storage.svc.cluster.local` |
+
+Frontend image `0.0.1` also crashed as non-root because it lacked the `/tmp` nginx configuration. While the rollout was stuck, the previous `0.0.4` pod kept serving traffic.
+
+### Keycloak Configuration
+
+This configuration exists only in Keycloak and must be recreated if the realm is rebuilt.
+
+- Realm: `Vocabulary`
+- Location: Clients → `vocabulary-app` → Client scopes → `vocabulary-app-dedicated` → Mappers
+- Mapper type: Audience
+- Name: `aud-vocabulary-api-admin`
+- Included Client Audience: `vocabulary-api-admin`
+- Included Custom Audience: empty
+- Add to access token: ON
+
+Issued access tokens must contain exactly `vocabulary-api-admin` in `aud`. A trailing space in the value was found during this work, so check the value in Client scopes → Evaluate.
+
+### Deployed Versions
+
+| Component | Version | Digest prefix |
+|---|---|---|
+| vocabulary-app | 0.0.5 | `33cf06ce755a` |
+| vocabulary-api | 0.0.3 | `69fd0291994c` |
+
+The API ConfigMap now sets `OPENROUTER_MODEL` to `nvidia/nemotron-3.5-lightning:free`.
+
+### Validation
+
+- Frontend requests returned HTTP 200 and Keycloak logged no introspection errors.
+- Categories, words and texts were created through the application.
+- Word images and audio were confirmed working in the browser by the user.
+
+### Git and Version Control
+
+- my-vocabulary: 6fa7da3 — chore: new deploy
+- vocabulary-api: 9246a78 — fix(openrouter): replace retired model and surface HTTP errors
+- vocabulary-api: fa58b01 — fix(media): presign browser URLs with the public S3 endpoint
+- cloud-native-lab: f151062 — fix(kubernetes): deploy vocabulary authentication and media fixes
+
+Images `vocabulary-api:0.0.2` and `0.0.3` were built from the uncommitted working tree before these commits, so their revision label ends in `-dirty`.
+
+### Lessons Learned
+
+- Compare the served bundle with the source; the Git history alone did not show what was running.
+- Keycloak events give the exact introspection failure, while API logs only show the 401.
+- A client that reads a response without checking its status hides the real upstream error.
+- Free AI models can be retired or rate limited without notice, so the model should remain configurable.
+- Presigned URLs must be signed for the host the browser will use.
+
+### Future Notes
+
+- Evaluate a dedicated introspection client instead of `vocabulary-api-admin` in the token audience.
+- Rebuild the API image from a committed revision at the next release.
+- Disable SQLAlchemy statement logging, which writes user identifiers to the API logs.
+- Resolve the circular import between `get_words_by_user` and `app.modules`.
+- Review Registry tags against the images in use before any further cleanup.
+
+### End-of-Day Status
+
+The application is working in production, but the source of its running versions has not been published yet.
+
+| Repository | Branch | Local | Remote branch | Status |
+|---|---|---|---|---|
+| my-vocabulary | main | 6fa7da3 | 6fa7da3 | Published; no `develop` branch on the remote |
+| vocabulary-api | feature/vocabulary-api-container | fa58b01 | 722568b | Two commits not pushed; `main` is at 3f5c874 and there is no remote `develop` |
+| cloud-native-lab | feature/vocabulary-auth-media-fixes | this branch | Not created | Not pushed; `main` is at 09dc293 and `develop` at f4d8c27 |
+
+Registry tags found by direct lookup:
+
+| Image | Tags present | In use |
+|---|---|---|
+| vocabulary-app | 0.0.1, 0.0.2, 0.0.3, 0.0.4, 0.0.5 | 0.0.5 |
+| vocabulary-api | 0.0.1, 0.0.2, 0.0.3 | 0.0.3 |
+| minio-community | 7aac2a2 | Not checked in this work |
+
+The earlier cleanup of `vocabulary-app` tags `0.0.2` to `0.0.4` is not reflected in the Registry. Tag `0.0.1` cannot run under the current non-root Deployment.
+
+Do not run `kubectl-aws apply -k` from `main` until this branch is merged, because `main` still has `vocabulary-app:0.0.4` and `vocabulary-api:0.0.1`.
+
+### Next Steps
+
+1. Push the `vocabulary-api` and `cloud-native-lab` branches.
+2. Merge the `cloud-native-lab` branch into `develop`, then promote it to `main`.
+3. Confirm that `kubectl-aws diff -k` from `main` reports no changes.
+4. Define how `vocabulary-api` reaches `main`, since its deployed code is only on a feature branch.
+5. Decide which Registry tags to keep, then clean up without removing images in use or rollback targets.
+6. Build the next API image from a committed revision and turn off SQLAlchemy statement logging.
+
+### Publication Update — 2026-11-07
+
+- vocabulary-api: `feature/vocabulary-api-container` was merged into `main` with a merge commit. The remote has no `develop` branch, and the GitHub CLI was not available for a pull request.
+- cloud-native-lab: this branch was merged into `develop` and promoted to `main`.
+- Before the merge, `kubectl-aws diff -k` against these manifests reported no changes, so applying from `main` now matches production.
+- my-vocabulary already had the frontend change on `main`.
+
+Still pending: Registry cleanup, and the next API image built from a committed revision with SQLAlchemy statement logging disabled.
