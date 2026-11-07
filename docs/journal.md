@@ -1461,3 +1461,12 @@ Do not run `kubectl-aws apply -k` from `main` until this branch is merged, becau
 4. Define how `vocabulary-api` reaches `main`, since its deployed code is only on a feature branch.
 5. Decide which Registry tags to keep, then clean up without removing images in use or rollback targets.
 6. Build the next API image from a committed revision and turn off SQLAlchemy statement logging.
+
+### Publication Update — 2026-11-07
+
+- vocabulary-api: `feature/vocabulary-api-container` was merged into `main` with a merge commit. The remote has no `develop` branch, and the GitHub CLI was not available for a pull request.
+- cloud-native-lab: this branch was merged into `develop` and promoted to `main`.
+- Before the merge, `kubectl-aws diff -k` against these manifests reported no changes, so applying from `main` now matches production.
+- my-vocabulary already had the frontend change on `main`.
+
+Still pending: Registry cleanup, and the next API image built from a committed revision with SQLAlchemy statement logging disabled.
