@@ -1484,3 +1484,46 @@ Unused Vocabulary tags were deleted with user approval. Before deletion, each ta
 - Tags were deleted by digest through the Registry API, and each request returned HTTP 202.
 - Deletion is enabled by `storage.delete.enabled: true` in the image's default `/etc/distribution/config.yml`, so no Registry configuration change was needed.
 - Garbage collection has not run, so the deleted layers still use disk space (174.6 MiB in total after deletion, against a 5 GiB volume). It requires putting the Registry in read-only mode and restarting it.
+
+## 2026-11-12 — Vocabulary API 0.0.4 and Registry Garbage Collection Assessment
+
+### Objective
+
+Close the two items left open on 2026-11-07: build the next API image from a committed revision with SQLAlchemy statement logging disabled, and assess Registry garbage collection.
+
+### Cluster Access
+
+At first, `kubectl-aws` timed out when connecting to the Kubernetes API on port 6443, although the public HTTPS endpoints still responded. The administrator's public IP had changed, and the AWS security group allows 6443 only from the administrator address. Access returned after the rule was updated.
+
+Lesson: when `kubectl-aws` times out but the applications respond, check the administrator IP rule first.
+
+### SQL Statement Logging
+
+- vocabulary-api `app/core/config.py` now creates the engine with `echo=False`. Statement logging had written every query and its parameters, including user identifiers, to the production logs.
+- Commit `cb7fe1d`, merged into `develop` and promoted to `main` at `e1ff01a`.
+
+### Vocabulary API 0.0.4
+
+- Built from a `git archive` export of `e1ff01a`, so ignored local files cannot enter the image.
+- `org.opencontainers.image.revision` is set to the full commit, without the `-dirty` suffix carried by 0.0.2 and 0.0.3.
+- Checked before the push: it runs as `appuser`, contains no `.env` file, and `app.main` imports.
+- Before applying, `kubectl-aws diff -k` showed only the image tag change.
+- The rollout completed, `/docs` returned HTTP 200, and the startup logs contained no SQL statements.
+- Rollback: set the tag back to `0.0.3` in `base/vocabulary/api/deployment.yaml` and apply again.
+
+### Registry Garbage Collection
+
+- A dry-run (`registry garbage-collect --dry-run`) found 36 blobs marked and 12 blobs eligible for deletion, about 0.4 MB of the 174.7 MB in use.
+- The tags deleted on 2026-11-07 shared almost all their layers with the kept tags.
+- The real collection needs a read-only window and two restarts, so it was not run. Revisit it after removing more tags. The candidates are vocabulary-api 0.0.2 and 0.0.3, which carry `-dirty` labels.
+
+### Git Workflow
+
+After a `feature/*` or `docs/*` branch is merged and promoted to `main`, it is deleted locally and on the remote, and `develop` is kept equal to `main`. All four repositories follow this pattern. The only exception is `new_sidebar` in my-vocabulary, which was kept deliberately.
+
+### Current Versions
+
+| Component | Version |
+|---|---|
+| vocabulary-app | 0.0.5 |
+| vocabulary-api | 0.0.4 |
