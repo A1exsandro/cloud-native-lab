@@ -109,14 +109,14 @@ These principles guide every architectural and implementation decision throughou
 
 - [x] Project planning
 - [x] Define architecture
-- [ ] Project structure
-- [ ] Terraform bootstrap
-- [ ] Oracle Cloud networking
-- [ ] Compute instances
-- [ ] Debian bootstrap
-- [ ] RKE2 installation
+- [x] Project structure
+- [x] Terraform bootstrap
+- [x] Oracle Cloud networking
+- [x] Compute instances
+- [x] Debian bootstrap
+- [x] K3S installation
 - [ ] Longhorn
-- [ ] Traefik
+- [x] Traefik
 - [ ] MetalLB
 - [ ] ArgoCD
 - [ ] Vault
