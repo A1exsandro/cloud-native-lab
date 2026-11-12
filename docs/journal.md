@@ -1470,3 +1470,17 @@ Do not run `kubectl-aws apply -k` from `main` until this branch is merged, becau
 - my-vocabulary already had the frontend change on `main`.
 
 Still pending: Registry cleanup, and the next API image built from a committed revision with SQLAlchemy statement logging disabled.
+
+### Registry Cleanup — 2026-11-07
+
+Unused Vocabulary tags were deleted with user approval. Before deletion, each tag was confirmed unused by every pod in the cluster and its digest was compared with the kept tags.
+
+| Image | Deleted | Kept |
+|---|---|---|
+| vocabulary-app | 0.0.1, 0.0.2, 0.0.3 | 0.0.4 (rollback), 0.0.5 (in use) |
+| vocabulary-api | 0.0.1 | 0.0.2 (rollback), 0.0.3 (in use) |
+| minio-community | — | 7aac2a2 |
+
+- Tags were deleted by digest through the Registry API, and each request returned HTTP 202.
+- Deletion is enabled by `storage.delete.enabled: true` in the image's default `/etc/distribution/config.yml`, so no Registry configuration change was needed.
+- Garbage collection has not run, so the deleted layers still use disk space (174.6 MiB in total after deletion, against a 5 GiB volume). It requires putting the Registry in read-only mode and restarting it.
