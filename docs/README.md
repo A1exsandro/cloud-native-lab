@@ -14,6 +14,7 @@ The documentation evolves together with the source code and follows the same ver
 | decisions.md | Summary of architectural decisions |
 | journal.md | Technical journal and project history |
 | adr/ | Architecture Decision Records |
+| guides/ | Operational guides and runbooks (for example, [updating the administrator IP](guides/aws/admin-ip-update.md)) |
 
 ## Principles
 
