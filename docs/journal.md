@@ -1495,7 +1495,7 @@ Close the two items left open on 2026-11-07: build the next API image from a com
 
 At first, `kubectl-aws` timed out when connecting to the Kubernetes API on port 6443, although the public HTTPS endpoints still responded. The administrator's public IP had changed, and the AWS security group allows 6443 only from the administrator address. Access returned after the rule was updated.
 
-Lesson: when `kubectl-aws` times out but the applications respond, check the administrator IP rule first.
+Lesson: when `kubectl-aws` times out but the applications respond, check the administrator IP rule first. See the runbook [Update the Administrator IP for Cluster Access](guides/aws/admin-ip-update.md).
 
 ### SQL Statement Logging
 
