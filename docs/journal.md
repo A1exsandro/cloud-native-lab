@@ -1527,3 +1527,46 @@ After a `feature/*` or `docs/*` branch is merged and promoted to `main`, it is d
 |---|---|
 | vocabulary-app | 0.0.5 |
 | vocabulary-api | 0.0.4 |
+
+---
+
+## 2026-11-13 — Vocabulary API 0.0.5: user_categories Table Rename
+
+### Objective
+
+Close vocabulary-api#5: fix the misspelled table name `user_cotegories` without losing the user/category links. The API creates tables with `create_all` and has no migration tool, so a new image alone would have created an empty `user_categories` table.
+
+### Cluster Access
+
+`kubectl-aws` timed out again while the public endpoints responded. The administrator IP had changed, and the rule was updated following the [admin IP runbook](guides/aws/admin-ip-update.md).
+
+### Code
+
+- vocabulary-api `CategoryModel.py` now declares `__tablename__ = "user_categories"`.
+- `scripts/sql/0001_rename_user_categories.sql` renames the table and its primary key, foreign key and NOT NULL constraints in one transaction. PostgreSQL 18 names NOT NULL constraints after the table, so they are renamed too, and the result matches a fresh `create_all`.
+- `.gitignore` had ignored `scripts/*` since the first commit; `scripts/sql/` is now allowed so migrations are versioned.
+- Validated on a throwaway local PostgreSQL 18: the schema was created with the old model, the script ran, and `create_all` with the new model created no extra table.
+- vocabulary-api PR #6 (to `develop`) and PR #7 (to `main`, merge `3c9675c`).
+
+### Deployment
+
+1. Backup with `pg_dump -Fc` of the `vocabulary` database, stored outside the repositories under `~/backups/vocabulary/` with mode 600. The dump was checked with `pg_restore -l`.
+2. Before the rename: 3 rows. A checksum of all `(user_id, category_id)` pairs was recorded.
+3. `vocabulary-api` scaled to 0.
+4. The script ran with `ON_ERROR_STOP=1` and committed.
+5. After the rename: 3 rows with the same checksum. Only `user_categories` exists.
+6. Image `vocabulary-api:0.0.5`, built from a `git archive` export of `3c9675c`, revision label set. Before the push: it runs as `appuser`, has no `.env` file, and the model uses `user_categories`. It also ships the circular import fix from vocabulary-api#1.
+7. `kubectl-aws diff -k overlays/aws/vocabulary` showed only the tag change. `apply -k` restored 1 replica with 0.0.5.
+
+The API was down for about 30 seconds. After the rollout, `/docs` returned HTTP 200, a protected category route returned HTTP 401 without a token, and the startup logs were clean.
+
+### Rollback
+
+Rolling back to 0.0.4 alone is not safe: it would create an empty `user_cotegories` table. Scale the API to 0, reverse the renames (or restore the backup), then set the tag back to `0.0.4`.
+
+### Current Versions
+
+| Component | Version |
+|---|---|
+| vocabulary-app | 0.0.5 |
+| vocabulary-api | 0.0.5 |
