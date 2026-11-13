@@ -1570,3 +1570,27 @@ Rolling back to 0.0.4 alone is not safe: it would create an empty `user_cotegori
 |---|---|
 | vocabulary-app | 0.0.5 |
 | vocabulary-api | 0.0.5 |
+
+---
+
+## 2026-11-13 — Keycloak Client for the Mobile App
+
+### Objective
+
+Close cloud-native-lab#11: give the Android app its own public client in the `Vocabulary` realm instead of reusing `vocabulary-app`.
+
+### Changes
+
+- Created `vocabulary-mobile`: public, standard flow only, PKCE S256, no direct access grants, redirect URI `com.alexsandro.vocabulary://oauth/callback`.
+- Added the `aud-vocabulary-api-admin` audience mapper, the same as `vocabulary-app`. Without it, introspection by `vocabulary-api-admin` fails and the API returns 401.
+- An example access token for `vocabulary-mobile` has `azp = vocabulary-mobile` and `aud = [vocabulary-api-admin, account]`, the same audience as `vocabulary-app`.
+- A full export of `vocabulary-app` taken before the change was identical to one taken after it.
+- Documented in [Keycloak Clients for the Vocabulary Realm](guides/keycloak/vocabulary-clients.md).
+
+### Administrator Access
+
+The bootstrap password in the Keycloak Secret no longer works, because the administrator password was changed earlier. The administrator logged in to `kcadm.sh` interactively inside the pod, so the password never left the terminal. The stored session was deleted from the pod when the work was finished.
+
+### Pending
+
+A real login from the app, with the API accepting the token, will be tested in vocabulary-mobile#8.
