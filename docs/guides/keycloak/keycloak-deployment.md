@@ -290,7 +290,7 @@ Planned improvements:
 - HTTPS using cert-manager.
 - Stable DNS hostname.
 - Automated PostgreSQL backups.
-- Keycloak realm configuration and application clients.
+- Keycloak realm export. The Vocabulary clients are documented in [Keycloak Clients for the Vocabulary Realm](vocabulary-clients.md).
 - GitOps management through ArgoCD.
 - Production-grade secret management.
 - High availability when the cluster architecture supports it.
